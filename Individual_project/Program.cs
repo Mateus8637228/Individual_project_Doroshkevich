@@ -1,6 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using Individual_project.Models;
-using Individual_project.Prototype;
+using Individual_project.Services;
 
 namespace Individual_project
 {
@@ -10,31 +11,21 @@ namespace Individual_project
     {
       Console.OutputEncoding = System.Text.Encoding.UTF8;
 
+      InvoiceGenerator invoiceGenerator = new InvoiceGenerator();
+      TemplateRegistry templateRegistry = invoiceGenerator.GetTemplateRegistry();
+
+      string standardTemplateKey = "standard";
+      string noVatTemplateKey = "no-vat";
+
       InvoiceTemplate standardTemplate = BuildStandardTemplate();
+      InvoiceTemplate noVatTemplate = BuildNoVatTemplate();
 
-      string originalTitle = "=== ORIGINAL TEMPLATE ===";
-      Console.WriteLine(originalTitle);
-      PrintTemplateInfo(standardTemplate);
-      Console.WriteLine();
+      invoiceGenerator.RegisterTemplate(standardTemplateKey, standardTemplate);
+      invoiceGenerator.RegisterTemplate(noVatTemplateKey, noVatTemplate);
 
-      IPrototype prototypeReference = standardTemplate;
-      IPrototype clonedPrototype = prototypeReference.Clone();
-      InvoiceTemplate ipTemplate = (InvoiceTemplate)clonedPrototype;
-
-      string clonedTemplateName = "Standard services (no VAT)";
-      ipTemplate.TemplateName = clonedTemplateName;
-
-      decimal noVatRate = 0.0m;
-      ipTemplate.DefaultVatRatePercent = noVatRate;
-
-      string clonedTitle = "=== CLONED TEMPLATE (modified) ===";
-      Console.WriteLine(clonedTitle);
-      PrintTemplateInfo(ipTemplate);
-      Console.WriteLine();
-
-      string originalCheckTitle = "=== ORIGINAL TEMPLATE (unchanged) ===";
-      Console.WriteLine(originalCheckTitle);
-      PrintTemplateInfo(standardTemplate);
+      string registryTitle = "=== TEMPLATE REGISTRY ===";
+      Console.WriteLine(registryTitle);
+      PrintRegistryKeys(templateRegistry);
       Console.WriteLine();
 
       int issueYear = 2026;
@@ -45,7 +36,8 @@ namespace Individual_project
       string firstInvoiceNumber = "INV-001";
       string firstClientName = "Ivanov IE";
       string firstClientAddress = "Minsk, Client St., 10";
-      Invoice firstInvoice = standardTemplate.CreateInvoice(
+      Invoice firstInvoice = invoiceGenerator.GenerateInvoice(
+        standardTemplateKey,
         firstInvoiceNumber,
         issueDate,
         firstClientName,
@@ -56,12 +48,37 @@ namespace Individual_project
       string secondInvoiceNumber = "INV-002";
       string secondClientName = "Petrov IE";
       string secondClientAddress = "Minsk, Trade St., 5";
-      Invoice secondInvoice = ipTemplate.CreateInvoice(
+      Invoice secondInvoice = invoiceGenerator.GenerateInvoice(
+        noVatTemplateKey,
         secondInvoiceNumber,
         issueDate,
         secondClientName,
         secondClientAddress);
       PrintInvoice(secondInvoice);
+      Console.WriteLine();
+
+      string cloneDemoTitle = "=== CLONE FROM REGISTRY AND MODIFY ===";
+      Console.WriteLine(cloneDemoTitle);
+      InvoiceTemplate clonedTemplate = invoiceGenerator.GetClonedTemplate(standardTemplateKey);
+
+      string modifiedTemplateName = "Standard services (custom)";
+      clonedTemplate.TemplateName = modifiedTemplateName;
+
+      decimal customVatRate = 10.0m;
+      clonedTemplate.DefaultVatRatePercent = customVatRate;
+
+      PrintTemplateInfo(clonedTemplate);
+      Console.WriteLine();
+
+      string thirdInvoiceNumber = "INV-003";
+      string thirdClientName = "Sidorov IE";
+      string thirdClientAddress = "Minsk, Business St., 3";
+      Invoice thirdInvoice = clonedTemplate.CreateInvoice(
+        thirdInvoiceNumber,
+        issueDate,
+        thirdClientName,
+        thirdClientAddress);
+      PrintInvoice(thirdInvoice);
 
       Console.WriteLine();
       Console.WriteLine("Press Enter to exit...");
@@ -107,6 +124,52 @@ namespace Individual_project
       template.AddDefaultItem(secondItem);
 
       return template;
+    }
+
+    static InvoiceTemplate BuildNoVatTemplate()
+    {
+      string templateName = "Services without VAT";
+      string sellerCompanyName = "Example LLC";
+      string sellerTaxId = "123456789";
+      string sellerAddress = "Minsk, Example St., 1";
+      string sellerBankAccount = "BY00BANK00000000000000";
+      SellerInfo seller = new SellerInfo(
+        sellerCompanyName,
+        sellerTaxId,
+        sellerAddress,
+        sellerBankAccount);
+
+      string defaultClientName = "Default client";
+      string defaultClientAddress = "Minsk";
+      string currencyCode = "BYN";
+      decimal vatRatePercent = 0.0m;
+
+      InvoiceTemplate template = new InvoiceTemplate();
+      template.TemplateName = templateName;
+      template.Seller = seller;
+      template.DefaultClientName = defaultClientName;
+      template.DefaultClientAddress = defaultClientAddress;
+      template.DefaultCurrency = currencyCode;
+      template.DefaultVatRatePercent = vatRatePercent;
+
+      string itemName = "Support";
+      int itemQuantity = 1;
+      decimal itemUnitPrice = 300.0m;
+      InvoiceItem item = new InvoiceItem(itemName, itemQuantity, itemUnitPrice);
+      template.AddDefaultItem(item);
+
+      return template;
+    }
+
+    static void PrintRegistryKeys(TemplateRegistry templateRegistry)
+    {
+      List<string> templateKeys = templateRegistry.GetTemplateKeys();
+      int keyCount = templateKeys.Count;
+
+      for (int keyIndex = 0; keyIndex < keyCount; ++keyIndex) {
+        string templateKey = templateKeys[keyIndex];
+        Console.WriteLine("  - " + templateKey);
+      }
     }
 
     static void PrintTemplateInfo(InvoiceTemplate template)

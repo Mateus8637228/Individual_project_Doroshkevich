@@ -48,6 +48,8 @@
     <Compile Include="Models\InvoiceTemplate.cs" />
     <Compile Include="Models\SellerInfo.cs" />
     <Compile Include="Prototype\IPrototype.cs" />
+    <Compile Include="Services\InvoiceGenerator.cs" />
+    <Compile Include="Services\TemplateRegistry.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
