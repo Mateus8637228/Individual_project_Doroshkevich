@@ -43,6 +43,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Factories\TemplateFactory.cs" />
+    <Compile Include="Helpers\OutputFolderHelper.cs" />
     <Compile Include="Models\Invoice.cs" />
     <Compile Include="Models\InvoiceItem.cs" />
     <Compile Include="Models\InvoiceTemplate.cs" />
@@ -52,6 +54,10 @@
     <Compile Include="Services\InvoiceTextExporter.cs" />
     <Compile Include="Services\TemplateRegistry.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="UI\ApplicationMenu.cs" />
+    <Compile Include="UI\ConsoleInputReader.cs" />
+    <Compile Include="UI\ConsolePrinter.cs" />
+    <Compile Include="UI\DemoScenarioRunner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

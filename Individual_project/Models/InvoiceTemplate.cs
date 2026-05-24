@@ -45,12 +45,7 @@ namespace Individual_project.Models
       copy.DefaultClientAddress = DefaultClientAddress;
 
       if (Seller != null) {
-        string companyName = Seller.CompanyName;
-        string taxId = Seller.TaxId;
-        string address = Seller.Address;
-        string bankAccount = Seller.BankAccount;
-        SellerInfo copiedSeller = new SellerInfo(companyName, taxId, address, bankAccount);
-        copy.Seller = copiedSeller;
+        copy.Seller = Seller.Clone();
       }
 
       CopyDefaultItemsTo(copy);
@@ -87,15 +82,28 @@ namespace Individual_project.Models
       Invoice invoice = new Invoice();
       invoice.Number = invoiceNumber;
       invoice.IssueDate = issueDate;
-      invoice.Seller = Seller;
       invoice.ClientName = clientName;
       invoice.ClientAddress = clientAddress;
       invoice.Currency = DefaultCurrency;
       invoice.VatRatePercent = DefaultVatRatePercent;
 
+      if (Seller != null) {
+        invoice.Seller = Seller.Clone();
+      }
+
       CopyDefaultItemsToInvoice(invoice);
 
       return invoice;
+    }
+
+    private InvoiceItem CopyItem(InvoiceItem sourceItem)
+    {
+      string itemName = sourceItem.Name;
+      int itemQuantity = sourceItem.Quantity;
+      decimal itemUnitPrice = sourceItem.UnitPrice;
+      InvoiceItem copiedItem = new InvoiceItem(itemName, itemQuantity, itemUnitPrice);
+
+      return copiedItem;
     }
 
     private void CopyDefaultItemsTo(InvoiceTemplate targetTemplate)
@@ -107,12 +115,7 @@ namespace Individual_project.Models
       int itemCount = DefaultItems.Count;
       for (int itemIndex = 0; itemIndex < itemCount; ++itemIndex) {
         InvoiceItem sourceItem = DefaultItems[itemIndex];
-
-        string itemName = sourceItem.Name;
-        int itemQuantity = sourceItem.Quantity;
-        decimal itemUnitPrice = sourceItem.UnitPrice;
-
-        InvoiceItem copiedItem = new InvoiceItem(itemName, itemQuantity, itemUnitPrice);
+        InvoiceItem copiedItem = CopyItem(sourceItem);
         targetTemplate.AddDefaultItem(copiedItem);
       }
     }
@@ -126,12 +129,7 @@ namespace Individual_project.Models
       int itemCount = DefaultItems.Count;
       for (int itemIndex = 0; itemIndex < itemCount; ++itemIndex) {
         InvoiceItem sourceItem = DefaultItems[itemIndex];
-
-        string itemName = sourceItem.Name;
-        int itemQuantity = sourceItem.Quantity;
-        decimal itemUnitPrice = sourceItem.UnitPrice;
-
-        InvoiceItem copiedItem = new InvoiceItem(itemName, itemQuantity, itemUnitPrice);
+        InvoiceItem copiedItem = CopyItem(sourceItem);
         invoice.AddItem(copiedItem);
       }
     }

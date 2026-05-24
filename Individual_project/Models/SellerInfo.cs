@@ -18,5 +18,16 @@ namespace Individual_project.Models
       Address = address;
       BankAccount = bankAccount;
     }
+
+    public SellerInfo Clone()
+    {
+      string companyName = CompanyName;
+      string taxId = TaxId;
+      string address = Address;
+      string bankAccount = BankAccount;
+      SellerInfo copy = new SellerInfo(companyName, taxId, address, bankAccount);
+
+      return copy;
+    }
   }
 }
