@@ -19,7 +19,7 @@ namespace Individual_project.Models
       Items = new List<InvoiceItem>();
       IssueDate = DateTime.Today;
 
-      string defaultCurrency = "BYN";
+      string defaultCurrency = "RUB";
       Currency = defaultCurrency;
     }
 

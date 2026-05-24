@@ -18,7 +18,7 @@ namespace Individual_project.Models
     {
       DefaultItems = new List<InvoiceItem>();
 
-      string defaultCurrency = "BYN";
+      string defaultCurrency = "RUB";
       DefaultCurrency = defaultCurrency;
 
       decimal zeroVatRate = 0.0m;

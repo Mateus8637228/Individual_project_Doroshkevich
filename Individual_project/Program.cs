@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using Individual_project.Models;
 using Individual_project.Services;
 
@@ -12,8 +13,37 @@ namespace Individual_project
       Console.OutputEncoding = System.Text.Encoding.UTF8;
 
       InvoiceGenerator invoiceGenerator = new InvoiceGenerator();
-      TemplateRegistry templateRegistry = invoiceGenerator.GetTemplateRegistry();
+      InvoiceTextExporter invoiceExporter = new InvoiceTextExporter();
+      string outputFolderPath = PrepareOutputFolder();
 
+      RegisterDefaultTemplates(invoiceGenerator);
+
+      RunScenario1_ListTemplates(invoiceGenerator);
+      RunScenario2_StandardInvoice(invoiceGenerator, invoiceExporter, outputFolderPath);
+      RunScenario3_NoVatInvoice(invoiceGenerator, invoiceExporter, outputFolderPath);
+      RunScenario4_CloneAndModifyTemplate(invoiceGenerator, invoiceExporter, outputFolderPath);
+      RunScenario5_CloneAndAddItem(invoiceGenerator, invoiceExporter, outputFolderPath);
+
+      Console.WriteLine();
+      Console.WriteLine("All scenarios completed. Files saved to: " + outputFolderPath);
+      Console.WriteLine("Press Enter to exit...");
+      Console.ReadLine();
+    }
+
+    static string PrepareOutputFolder()
+    {
+      string outputFolderName = "output";
+      string outputFolderPath = Path.Combine(Directory.GetCurrentDirectory(), outputFolderName);
+
+      if (!Directory.Exists(outputFolderPath)) {
+        Directory.CreateDirectory(outputFolderPath);
+      }
+
+      return outputFolderPath;
+    }
+
+    static void RegisterDefaultTemplates(InvoiceGenerator invoiceGenerator)
+    {
       string standardTemplateKey = "standard";
       string noVatTemplateKey = "no-vat";
 
@@ -22,46 +52,102 @@ namespace Individual_project
 
       invoiceGenerator.RegisterTemplate(standardTemplateKey, standardTemplate);
       invoiceGenerator.RegisterTemplate(noVatTemplateKey, noVatTemplate);
+    }
 
-      string registryTitle = "=== TEMPLATE REGISTRY ===";
-      Console.WriteLine(registryTitle);
+    static void RunScenario1_ListTemplates(InvoiceGenerator invoiceGenerator)
+    {
+      string scenarioTitle = "=== SCENARIO 1: TEMPLATE REGISTRY ===";
+      Console.WriteLine(scenarioTitle);
+
+      TemplateRegistry templateRegistry = invoiceGenerator.GetTemplateRegistry();
       PrintRegistryKeys(templateRegistry);
       Console.WriteLine();
+    }
 
+    static void RunScenario2_StandardInvoice(
+      InvoiceGenerator invoiceGenerator,
+      InvoiceTextExporter invoiceExporter,
+      string outputFolderPath)
+    {
+      string scenarioTitle = "=== SCENARIO 2: INVOICE FROM STANDARD TEMPLATE ===";
+      Console.WriteLine(scenarioTitle);
+
+      string templateKey = "standard";
+      string invoiceNumber = "INV-001";
       int issueYear = 2026;
       int issueMonth = 5;
       int issueDay = 24;
       DateTime issueDate = new DateTime(issueYear, issueMonth, issueDay);
 
-      string firstInvoiceNumber = "INV-001";
-      string firstClientName = "Ivanov IE";
-      string firstClientAddress = "Minsk, Client St., 10";
-      Invoice firstInvoice = invoiceGenerator.GenerateInvoice(
-        standardTemplateKey,
-        firstInvoiceNumber,
+      string clientName = "Doroshkevich ME";
+      string clientAddress = "Kemerovo, Sovetskiy Ave., 10";
+
+      Invoice invoice = invoiceGenerator.GenerateInvoice(
+        templateKey,
+        invoiceNumber,
         issueDate,
-        firstClientName,
-        firstClientAddress);
-      PrintInvoice(firstInvoice);
-      Console.WriteLine();
+        clientName,
+        clientAddress);
 
-      string secondInvoiceNumber = "INV-002";
-      string secondClientName = "Petrov IE";
-      string secondClientAddress = "Minsk, Trade St., 5";
-      Invoice secondInvoice = invoiceGenerator.GenerateInvoice(
-        noVatTemplateKey,
-        secondInvoiceNumber,
+      PrintInvoiceToConsole(invoice, invoiceExporter);
+
+      string fileName = "invoice-001.txt";
+      string filePath = Path.Combine(outputFolderPath, fileName);
+      invoiceExporter.SaveToFile(invoice, filePath);
+
+      string savedMessage = "Saved: " + filePath;
+      Console.WriteLine(savedMessage);
+      Console.WriteLine();
+    }
+
+    static void RunScenario3_NoVatInvoice(
+      InvoiceGenerator invoiceGenerator,
+      InvoiceTextExporter invoiceExporter,
+      string outputFolderPath)
+    {
+      string scenarioTitle = "=== SCENARIO 3: INVOICE WITHOUT VAT ===";
+      Console.WriteLine(scenarioTitle);
+
+      string templateKey = "no-vat";
+      string invoiceNumber = "INV-002";
+      int issueYear = 2026;
+      int issueMonth = 5;
+      int issueDay = 25;
+      DateTime issueDate = new DateTime(issueYear, issueMonth, issueDay);
+
+      string clientName = "IP Petrov";
+      string clientAddress = "Kemerovo, Trade St., 5";
+
+      Invoice invoice = invoiceGenerator.GenerateInvoice(
+        templateKey,
+        invoiceNumber,
         issueDate,
-        secondClientName,
-        secondClientAddress);
-      PrintInvoice(secondInvoice);
+        clientName,
+        clientAddress);
+
+      PrintInvoiceToConsole(invoice, invoiceExporter);
+
+      string fileName = "invoice-002.txt";
+      string filePath = Path.Combine(outputFolderPath, fileName);
+      invoiceExporter.SaveToFile(invoice, filePath);
+
+      string savedMessage = "Saved: " + filePath;
+      Console.WriteLine(savedMessage);
       Console.WriteLine();
+    }
 
-      string cloneDemoTitle = "=== CLONE FROM REGISTRY AND MODIFY ===";
-      Console.WriteLine(cloneDemoTitle);
-      InvoiceTemplate clonedTemplate = invoiceGenerator.GetClonedTemplate(standardTemplateKey);
+    static void RunScenario4_CloneAndModifyTemplate(
+      InvoiceGenerator invoiceGenerator,
+      InvoiceTextExporter invoiceExporter,
+      string outputFolderPath)
+    {
+      string scenarioTitle = "=== SCENARIO 4: CLONE TEMPLATE AND CHANGE VAT ===";
+      Console.WriteLine(scenarioTitle);
 
-      string modifiedTemplateName = "Standard services (custom)";
+      string templateKey = "standard";
+      InvoiceTemplate clonedTemplate = invoiceGenerator.GetClonedTemplate(templateKey);
+
+      string modifiedTemplateName = "Standard services (custom VAT)";
       clonedTemplate.TemplateName = modifiedTemplateName;
 
       decimal customVatRate = 10.0m;
@@ -70,28 +156,91 @@ namespace Individual_project
       PrintTemplateInfo(clonedTemplate);
       Console.WriteLine();
 
-      string thirdInvoiceNumber = "INV-003";
-      string thirdClientName = "Sidorov IE";
-      string thirdClientAddress = "Minsk, Business St., 3";
-      Invoice thirdInvoice = clonedTemplate.CreateInvoice(
-        thirdInvoiceNumber,
-        issueDate,
-        thirdClientName,
-        thirdClientAddress);
-      PrintInvoice(thirdInvoice);
+      string invoiceNumber = "INV-003";
+      int issueYear = 2026;
+      int issueMonth = 5;
+      int issueDay = 26;
+      DateTime issueDate = new DateTime(issueYear, issueMonth, issueDay);
 
+      string clientName = "IP Sidorov";
+      string clientAddress = "Kemerovo, Business St., 3";
+
+      Invoice invoice = clonedTemplate.CreateInvoice(
+        invoiceNumber,
+        issueDate,
+        clientName,
+        clientAddress);
+
+      PrintInvoiceToConsole(invoice, invoiceExporter);
+
+      string fileName = "invoice-003.txt";
+      string filePath = Path.Combine(outputFolderPath, fileName);
+      invoiceExporter.SaveToFile(invoice, filePath);
+
+      string savedMessage = "Saved: " + filePath;
+      Console.WriteLine(savedMessage);
       Console.WriteLine();
-      Console.WriteLine("Press Enter to exit...");
-      Console.ReadLine();
+    }
+
+    static void RunScenario5_CloneAndAddItem(
+      InvoiceGenerator invoiceGenerator,
+      InvoiceTextExporter invoiceExporter,
+      string outputFolderPath)
+    {
+      string scenarioTitle = "=== SCENARIO 5: CLONE TEMPLATE AND ADD ITEM ===";
+      Console.WriteLine(scenarioTitle);
+
+      string templateKey = "standard";
+      InvoiceTemplate clonedTemplate = invoiceGenerator.GetClonedTemplate(templateKey);
+
+      string extraItemName = "Technical support";
+      int extraItemQuantity = 3;
+      decimal extraItemUnitPrice = 50.0m;
+      InvoiceItem extraItem = new InvoiceItem(extraItemName, extraItemQuantity, extraItemUnitPrice);
+      clonedTemplate.AddDefaultItem(extraItem);
+
+      PrintTemplateInfo(clonedTemplate);
+      Console.WriteLine();
+
+      string invoiceNumber = "INV-004";
+      int issueYear = 2026;
+      int issueMonth = 5;
+      int issueDay = 27;
+      DateTime issueDate = new DateTime(issueYear, issueMonth, issueDay);
+
+      string clientName = "IP Kozlov";
+      string clientAddress = "Kemerovo, Office St., 7";
+
+      Invoice invoice = clonedTemplate.CreateInvoice(
+        invoiceNumber,
+        issueDate,
+        clientName,
+        clientAddress);
+
+      PrintInvoiceToConsole(invoice, invoiceExporter);
+
+      string fileName = "invoice-004.txt";
+      string filePath = Path.Combine(outputFolderPath, fileName);
+      invoiceExporter.SaveToFile(invoice, filePath);
+
+      string savedMessage = "Saved: " + filePath;
+      Console.WriteLine(savedMessage);
+      Console.WriteLine();
+    }
+
+    static void PrintInvoiceToConsole(Invoice invoice, InvoiceTextExporter invoiceExporter)
+    {
+      string invoiceText = invoiceExporter.BuildText(invoice);
+      Console.WriteLine(invoiceText);
     }
 
     static InvoiceTemplate BuildStandardTemplate()
     {
       string templateName = "Standard services";
-      string sellerCompanyName = "Example LLC";
-      string sellerTaxId = "123456789";
-      string sellerAddress = "Minsk, Example St., 1";
-      string sellerBankAccount = "BY00BANK00000000000000";
+      string sellerCompanyName = "OOO Example";
+      string sellerTaxId = "4200123456";
+      string sellerAddress = "Kemerovo, Lenin St., 1";
+      string sellerBankAccount = "40702810123456789012";
       SellerInfo seller = new SellerInfo(
         sellerCompanyName,
         sellerTaxId,
@@ -99,8 +248,8 @@ namespace Individual_project
         sellerBankAccount);
 
       string defaultClientName = "Default client";
-      string defaultClientAddress = "Minsk";
-      string currencyCode = "BYN";
+      string defaultClientAddress = "Kemerovo";
+      string currencyCode = "RUB";
       decimal vatRatePercent = 20.0m;
 
       InvoiceTemplate template = new InvoiceTemplate();
@@ -129,10 +278,10 @@ namespace Individual_project
     static InvoiceTemplate BuildNoVatTemplate()
     {
       string templateName = "Services without VAT";
-      string sellerCompanyName = "Example LLC";
-      string sellerTaxId = "123456789";
-      string sellerAddress = "Minsk, Example St., 1";
-      string sellerBankAccount = "BY00BANK00000000000000";
+      string sellerCompanyName = "OOO Example";
+      string sellerTaxId = "4200123456";
+      string sellerAddress = "Kemerovo, Lenin St., 1";
+      string sellerBankAccount = "40702810123456789012";
       SellerInfo seller = new SellerInfo(
         sellerCompanyName,
         sellerTaxId,
@@ -140,8 +289,8 @@ namespace Individual_project
         sellerBankAccount);
 
       string defaultClientName = "Default client";
-      string defaultClientAddress = "Minsk";
-      string currencyCode = "BYN";
+      string defaultClientAddress = "Kemerovo";
+      string currencyCode = "RUB";
       decimal vatRatePercent = 0.0m;
 
       InvoiceTemplate template = new InvoiceTemplate();
@@ -191,46 +340,6 @@ namespace Individual_project
           + lineTotal;
         Console.WriteLine(itemLine);
       }
-    }
-
-    static void PrintInvoice(Invoice invoice)
-    {
-      int moneyDecimalPlaces = 2;
-      string moneyFormat = "F" + moneyDecimalPlaces.ToString();
-
-      Console.WriteLine("=== INVOICE ===");
-      Console.WriteLine("Number: " + invoice.Number);
-      Console.WriteLine("Date: " + invoice.IssueDate.ToString("dd.MM.yyyy"));
-      Console.WriteLine();
-      Console.WriteLine("Seller: " + invoice.Seller.CompanyName);
-      Console.WriteLine("Tax ID: " + invoice.Seller.TaxId);
-      Console.WriteLine("Address: " + invoice.Seller.Address);
-      Console.WriteLine();
-      Console.WriteLine("Client: " + invoice.ClientName);
-      Console.WriteLine("Address: " + invoice.ClientAddress);
-      Console.WriteLine();
-      Console.WriteLine("Items:");
-
-      int itemCount = invoice.Items.Count;
-      for (int itemIndex = 0; itemIndex < itemCount; ++itemIndex) {
-        InvoiceItem currentItem = invoice.Items[itemIndex];
-        decimal lineTotal = currentItem.GetLineTotal();
-        string itemLine = "  - " + currentItem.Name + ": "
-          + currentItem.Quantity + " x "
-          + currentItem.UnitPrice.ToString(moneyFormat) + " = "
-          + lineTotal.ToString(moneyFormat) + " " + invoice.Currency;
-        Console.WriteLine(itemLine);
-      }
-
-      Console.WriteLine();
-      decimal subtotal = invoice.GetSubtotal();
-      decimal vatAmount = invoice.GetVatAmount();
-      decimal total = invoice.GetTotal();
-
-      Console.WriteLine("Subtotal: " + subtotal.ToString(moneyFormat) + " " + invoice.Currency);
-      Console.WriteLine("VAT (" + invoice.VatRatePercent + "%): "
-        + vatAmount.ToString(moneyFormat) + " " + invoice.Currency);
-      Console.WriteLine("TOTAL: " + total.ToString(moneyFormat) + " " + invoice.Currency);
     }
   }
 }
