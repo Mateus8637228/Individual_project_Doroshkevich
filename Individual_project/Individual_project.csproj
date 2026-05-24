@@ -47,6 +47,7 @@
     <Compile Include="Models\InvoiceItem.cs" />
     <Compile Include="Models\InvoiceTemplate.cs" />
     <Compile Include="Models\SellerInfo.cs" />
+    <Compile Include="Prototype\IPrototype.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

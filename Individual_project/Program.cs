@@ -1,5 +1,6 @@
 ﻿using System;
 using Individual_project.Models;
+using Individual_project.Prototype;
 
 namespace Individual_project
 {
@@ -11,40 +12,55 @@ namespace Individual_project
 
       InvoiceTemplate standardTemplate = BuildStandardTemplate();
 
-      string templateTitle = "=== INVOICE TEMPLATE ===";
-      Console.WriteLine(templateTitle);
+      string originalTitle = "=== ORIGINAL TEMPLATE ===";
+      Console.WriteLine(originalTitle);
       PrintTemplateInfo(standardTemplate);
       Console.WriteLine();
 
-      string firstInvoiceNumber = "INV-001";
-      int firstIssueYear = 2026;
-      int firstIssueMonth = 5;
-      int firstIssueDay = 24;
-      DateTime firstIssueDate = new DateTime(firstIssueYear, firstIssueMonth, firstIssueDay);
+      IPrototype prototypeReference = standardTemplate;
+      IPrototype clonedPrototype = prototypeReference.Clone();
+      InvoiceTemplate ipTemplate = (InvoiceTemplate)clonedPrototype;
 
+      string clonedTemplateName = "Standard services (no VAT)";
+      ipTemplate.TemplateName = clonedTemplateName;
+
+      decimal noVatRate = 0.0m;
+      ipTemplate.DefaultVatRatePercent = noVatRate;
+
+      string clonedTitle = "=== CLONED TEMPLATE (modified) ===";
+      Console.WriteLine(clonedTitle);
+      PrintTemplateInfo(ipTemplate);
+      Console.WriteLine();
+
+      string originalCheckTitle = "=== ORIGINAL TEMPLATE (unchanged) ===";
+      Console.WriteLine(originalCheckTitle);
+      PrintTemplateInfo(standardTemplate);
+      Console.WriteLine();
+
+      int issueYear = 2026;
+      int issueMonth = 5;
+      int issueDay = 24;
+      DateTime issueDate = new DateTime(issueYear, issueMonth, issueDay);
+
+      string firstInvoiceNumber = "INV-001";
       string firstClientName = "Ivanov IE";
       string firstClientAddress = "Minsk, Client St., 10";
       Invoice firstInvoice = standardTemplate.CreateInvoice(
         firstInvoiceNumber,
-        firstIssueDate,
+        issueDate,
         firstClientName,
         firstClientAddress);
-
       PrintInvoice(firstInvoice);
       Console.WriteLine();
 
       string secondInvoiceNumber = "INV-002";
-      int secondIssueDay = 25;
-      DateTime secondIssueDate = new DateTime(firstIssueYear, firstIssueMonth, secondIssueDay);
-
       string secondClientName = "Petrov IE";
       string secondClientAddress = "Minsk, Trade St., 5";
-      Invoice secondInvoice = standardTemplate.CreateInvoice(
+      Invoice secondInvoice = ipTemplate.CreateInvoice(
         secondInvoiceNumber,
-        secondIssueDate,
+        issueDate,
         secondClientName,
         secondClientAddress);
-
       PrintInvoice(secondInvoice);
 
       Console.WriteLine();

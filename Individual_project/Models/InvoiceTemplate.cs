@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
+using Individual_project.Prototype;
 
 namespace Individual_project.Models
 {
-  public class InvoiceTemplate
+  public class InvoiceTemplate : IPrototype
   {
     public string TemplateName { get; set; }
     public SellerInfo Seller { get; set; }
@@ -31,6 +32,30 @@ namespace Individual_project.Models
       }
 
       DefaultItems.Add(item);
+    }
+
+    public IPrototype Clone()
+    {
+      InvoiceTemplate copy = new InvoiceTemplate();
+
+      copy.TemplateName = TemplateName;
+      copy.DefaultCurrency = DefaultCurrency;
+      copy.DefaultVatRatePercent = DefaultVatRatePercent;
+      copy.DefaultClientName = DefaultClientName;
+      copy.DefaultClientAddress = DefaultClientAddress;
+
+      if (Seller != null) {
+        string companyName = Seller.CompanyName;
+        string taxId = Seller.TaxId;
+        string address = Seller.Address;
+        string bankAccount = Seller.BankAccount;
+        SellerInfo copiedSeller = new SellerInfo(companyName, taxId, address, bankAccount);
+        copy.Seller = copiedSeller;
+      }
+
+      CopyDefaultItemsTo(copy);
+
+      return copy;
     }
 
     public Invoice CreateInvoice(string invoiceNumber, DateTime issueDate)
@@ -68,6 +93,36 @@ namespace Individual_project.Models
       invoice.Currency = DefaultCurrency;
       invoice.VatRatePercent = DefaultVatRatePercent;
 
+      CopyDefaultItemsToInvoice(invoice);
+
+      return invoice;
+    }
+
+    private void CopyDefaultItemsTo(InvoiceTemplate targetTemplate)
+    {
+      if (targetTemplate == null) {
+        throw new ArgumentNullException(nameof(targetTemplate));
+      }
+
+      int itemCount = DefaultItems.Count;
+      for (int itemIndex = 0; itemIndex < itemCount; ++itemIndex) {
+        InvoiceItem sourceItem = DefaultItems[itemIndex];
+
+        string itemName = sourceItem.Name;
+        int itemQuantity = sourceItem.Quantity;
+        decimal itemUnitPrice = sourceItem.UnitPrice;
+
+        InvoiceItem copiedItem = new InvoiceItem(itemName, itemQuantity, itemUnitPrice);
+        targetTemplate.AddDefaultItem(copiedItem);
+      }
+    }
+
+    private void CopyDefaultItemsToInvoice(Invoice invoice)
+    {
+      if (invoice == null) {
+        throw new ArgumentNullException(nameof(invoice));
+      }
+
       int itemCount = DefaultItems.Count;
       for (int itemIndex = 0; itemIndex < itemCount; ++itemIndex) {
         InvoiceItem sourceItem = DefaultItems[itemIndex];
@@ -79,8 +134,6 @@ namespace Individual_project.Models
         InvoiceItem copiedItem = new InvoiceItem(itemName, itemQuantity, itemUnitPrice);
         invoice.AddItem(copiedItem);
       }
-
-      return invoice;
     }
   }
 }
