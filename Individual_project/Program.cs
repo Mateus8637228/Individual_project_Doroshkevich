@@ -9,49 +9,109 @@ namespace Individual_project
     {
       Console.OutputEncoding = System.Text.Encoding.UTF8;
 
-      string invoiceNumber = "INV-001";
-      int issueYear = 2026;
-      int issueMonth = 5;
-      int issueDay = 24;
-      DateTime issueDate = new DateTime(issueYear, issueMonth, issueDay);
+      InvoiceTemplate standardTemplate = BuildStandardTemplate();
 
+      string templateTitle = "=== INVOICE TEMPLATE ===";
+      Console.WriteLine(templateTitle);
+      PrintTemplateInfo(standardTemplate);
+      Console.WriteLine();
+
+      string firstInvoiceNumber = "INV-001";
+      int firstIssueYear = 2026;
+      int firstIssueMonth = 5;
+      int firstIssueDay = 24;
+      DateTime firstIssueDate = new DateTime(firstIssueYear, firstIssueMonth, firstIssueDay);
+
+      string firstClientName = "Ivanov IE";
+      string firstClientAddress = "Minsk, Client St., 10";
+      Invoice firstInvoice = standardTemplate.CreateInvoice(
+        firstInvoiceNumber,
+        firstIssueDate,
+        firstClientName,
+        firstClientAddress);
+
+      PrintInvoice(firstInvoice);
+      Console.WriteLine();
+
+      string secondInvoiceNumber = "INV-002";
+      int secondIssueDay = 25;
+      DateTime secondIssueDate = new DateTime(firstIssueYear, firstIssueMonth, secondIssueDay);
+
+      string secondClientName = "Petrov IE";
+      string secondClientAddress = "Minsk, Trade St., 5";
+      Invoice secondInvoice = standardTemplate.CreateInvoice(
+        secondInvoiceNumber,
+        secondIssueDate,
+        secondClientName,
+        secondClientAddress);
+
+      PrintInvoice(secondInvoice);
+
+      Console.WriteLine();
+      Console.WriteLine("Press Enter to exit...");
+      Console.ReadLine();
+    }
+
+    static InvoiceTemplate BuildStandardTemplate()
+    {
+      string templateName = "Standard services";
       string sellerCompanyName = "Example LLC";
       string sellerTaxId = "123456789";
       string sellerAddress = "Minsk, Example St., 1";
       string sellerBankAccount = "BY00BANK00000000000000";
-      SellerInfo seller = new SellerInfo(sellerCompanyName, sellerTaxId, sellerAddress, sellerBankAccount);
+      SellerInfo seller = new SellerInfo(
+        sellerCompanyName,
+        sellerTaxId,
+        sellerAddress,
+        sellerBankAccount);
 
-      string clientName = "Ivanov IE";
-      string clientAddress = "Minsk, Client St., 10";
+      string defaultClientName = "Default client";
+      string defaultClientAddress = "Minsk";
       string currencyCode = "BYN";
       decimal vatRatePercent = 20.0m;
 
-      Invoice invoice = new Invoice();
-      invoice.Number = invoiceNumber;
-      invoice.IssueDate = issueDate;
-      invoice.Seller = seller;
-      invoice.ClientName = clientName;
-      invoice.ClientAddress = clientAddress;
-      invoice.Currency = currencyCode;
-      invoice.VatRatePercent = vatRatePercent;
+      InvoiceTemplate template = new InvoiceTemplate();
+      template.TemplateName = templateName;
+      template.Seller = seller;
+      template.DefaultClientName = defaultClientName;
+      template.DefaultClientAddress = defaultClientAddress;
+      template.DefaultCurrency = currencyCode;
+      template.DefaultVatRatePercent = vatRatePercent;
 
       string firstItemName = "Consulting";
       int firstItemQuantity = 2;
       decimal firstItemUnitPrice = 150.0m;
       InvoiceItem firstItem = new InvoiceItem(firstItemName, firstItemQuantity, firstItemUnitPrice);
-      invoice.AddItem(firstItem);
+      template.AddDefaultItem(firstItem);
 
       string secondItemName = "Software development";
       int secondItemQuantity = 1;
       decimal secondItemUnitPrice = 800.0m;
       InvoiceItem secondItem = new InvoiceItem(secondItemName, secondItemQuantity, secondItemUnitPrice);
-      invoice.AddItem(secondItem);
+      template.AddDefaultItem(secondItem);
 
-      PrintInvoice(invoice);
+      return template;
+    }
 
-      Console.WriteLine();
-      Console.WriteLine("Press Enter to exit...");
-      Console.ReadLine();
+    static void PrintTemplateInfo(InvoiceTemplate template)
+    {
+      Console.WriteLine("Name: " + template.TemplateName);
+      Console.WriteLine("Seller: " + template.Seller.CompanyName);
+      Console.WriteLine("Currency: " + template.DefaultCurrency);
+      Console.WriteLine("VAT rate: " + template.DefaultVatRatePercent + "%");
+      Console.WriteLine("Default client: " + template.DefaultClientName);
+      Console.WriteLine("Default items:");
+
+      int itemCount = template.DefaultItems.Count;
+      for (int itemIndex = 0; itemIndex < itemCount; ++itemIndex) {
+        InvoiceItem currentItem = template.DefaultItems[itemIndex];
+        decimal lineTotal = currentItem.GetLineTotal();
+        string itemLine = "  - " + currentItem.Name + ": "
+          + currentItem.Quantity + " x "
+          + currentItem.UnitPrice + " = "
+          + lineTotal;
+        Console.WriteLine(itemLine);
+      }
     }
 
     static void PrintInvoice(Invoice invoice)
